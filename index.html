@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой любимый Петя</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
+            background: #000;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: none;
+        }
+        #game-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .scene {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            display: none !important;
+        }
+        .visible {
+            opacity: 1 !important;
+            pointer-events: all !important;
+            display: flex !important;
+        }
+
+        /* Интро */
+        #intro-scene {
+            background: url('image/background_intro.png') center/cover no-repeat;
+            z-index: 10;
+        }
+        #intro-scene::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.3) 100%);
+            z-index: 1;
+        }
+        .intro-logo-container {
+            position: relative;
+            z-index: 2;
+            animation: logoAppear 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes logoAppear {
+            0% { transform: scale(0.3); opacity: 0; filter: blur(15px); }
+            40% { transform: scale(1.08); opacity: 0.9; filter: blur(0px); }
+            60% { transform: scale(0.95); opacity: 1; filter: blur(0px); }
+            100% { transform: scale(1); opacity: 1; filter: blur(0px); }
+        }
+        .intro-logo {
+            width: 25vw;
+            max-width: 450px;
+            min-width: 200px;
+            filter: drop-shadow(0 15px 35px rgba(255, 255, 255, 0.7));
+            animation: floatBounce 3s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+        @keyframes floatBounce {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            25% { transform: translateY(-20px) scale(1.04); }
+            50% { transform: translateY(-10px) scale(1.02); }
+            75% { transform: translateY(-25px) scale(1.03); }
+        }
+        .countdown-text {
+            position: absolute;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            color: white;
+            font-size: clamp(16px, 2vw, 24px);
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            opacity: 0.8;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Белый переход */
+        #white-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #white-overlay.active { opacity: 1; }
+
+        /* Главное меню */
+        #menu-scene {
+            background: url('image/background_main_menu.jpg') center/cover no-repeat;
+            z-index: 5;
+        }
+        #menu-scene::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(180deg, rgba(255,218,185,0.4) 0%, rgba(255,182,193,0.3) 50%, rgba(255,218,185,0.5) 100%);
+            z-index: 1;
+        }
+        .menu-content {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column; align-items: center; gap: 5vh;
+            animation: fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .menu-logo {
+            width: 28vw; max-width: 420px; min-width: 200px;
+            filter: drop-shadow(0 20px 40px rgba(255,105,180,0.6));
+            animation: gentlePulse 3s ease-in-out infinite;
+        }
+        @keyframes gentlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+        .menu-buttons { display: flex; flex-direction: column; gap: 3vh; width: 30vw; max-width: 320px; min-width: 220px; }
+        .menu-btn {
+            position: relative; padding: 2.2vh 3vw;
+            font-size: clamp(20px, 2.8vw, 30px); font-weight: bold; color: white;
+            background: linear-gradient(135deg, #FF69B4, #FF85A2);
+            border: 5px solid white; border-radius: 60px; cursor: pointer;
+            text-align: center; letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(255,105,180,0.5), inset 0 3px 0 rgba(255,255,255,0.6), inset 0 -3px 0 rgba(0,0,0,0.1);
+            transition: all 0.3s; overflow: hidden; white-space: nowrap;
+        }
+        .menu-btn:hover { transform: translateY(-5px) scale(1.05); background: linear-gradient(135deg, #FF85A2, #FF69B4); }
+        .menu-btn:active { transform: translateY(3px) scale(0.96); transition: all 0.1s; }
+        .menu-btn.settings { background: linear-gradient(135deg, #87CEEB, #B0E0E6); }
+        .menu-btn.settings:hover { background: linear-gradient(135deg, #B0E0E6, #87CEEB); }
+
+        /* Загрузка */
+        #loading-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #FFE4E1, #FFF0F5); z-index: 15;
+            display: none; flex-direction: column; justify-content: center; align-items: center; gap: 3vh;
+        }
+        .loading-bar { width: 60%; max-width: 400px; height: 25px; background: #FFE4E1; border-radius: 15px; border: 4px solid #FF69B4; overflow: hidden; }
+        .loading-progress { width: 0%; height: 100%; background: linear-gradient(90deg, #FF69B4, #FF85A2); border-radius: 10px; transition: width 0.3s; }
+
+        /* Письмо */
+        #letter-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 25; display: none;
+            justify-content: center; align-items: center;
+        }
+        .letter {
+            background: linear-gradient(135deg, #FFF9E6, #FFF5EE); border-radius: 25px; padding: 35px;
+            max-width: 500px; width: 85%; position: relative; border: 5px solid #FFB6C1;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.5); animation: letterAppear 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes letterAppear {
+            from { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .close-letter {
+            position: absolute; top: -18px; right: -18px; width: 45px; height: 45px;
+            background: linear-gradient(135deg, #FF4444, #FF6666); border-radius: 50%;
+            border: 4px solid white; color: white; font-size: 22px; font-weight: bold;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 25px rgba(255,0,0,0.5); transition: all 0.3s; z-index: 26;
+        }
+        .close-letter:hover { transform: scale(1.15) rotate(90deg); }
+
+        /* Игровая сцена */
+        #game-scene {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: url('image/the_living_room.png') center/cover no-repeat;
+            z-index: 3; display: none;
+        }
+        .petya-container {
+            position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%);
+            z-index: 4; cursor: pointer; transition: transform 0.3s;
+        }
+        .petya-img {
+            width: 280px; height: auto;
+            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
+        }
+        @keyframes petyaJump {
+            0%, 100% { transform: translateY(0) scale(1); }
+            30% { transform: translateY(-50px) scale(1.1); }
+            50% { transform: translateY(-25px) scale(1.05); }
+            70% { transform: translateY(-40px) scale(1.08); }
+        }
+
+        /* Иконки */
+        .icons-bar {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 20px; z-index: 10;
+            background: rgba(255,255,255,0.95); padding: 15px 25px;
+            border-radius: 45px; border: 4px solid #FFB6C1;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        .icon-item {
+            width: 70px; height: 70px; border-radius: 50%; cursor: pointer;
+            position: relative; transition: all 0.3s; border: 3px solid transparent;
+            background: white; overflow: hidden;
+        }
+        .icon-item:hover { transform: translateY(-5px) scale(1.1); border-color: #FF69B4; box-shadow: 0 10px 30px rgba(255,105,180,0.5); }
+        .icon-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; position: relative; z-index: 1; }
+        .icon-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%; z-index: 2;
+            transition: height 0.8s ease, background 0.8s ease;
+            border-radius: 0 0 50% 50%;
+            pointer-events: none;
+        }
+
+        /* Верхняя панель */
+        .top-bar {
+            position: absolute; top: 20px; left: 20px; right: 20px;
+            display: flex; justify-content: space-between; align-items: center; z-index: 10;
+        }
+        .money-display {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.95); padding: 10px 20px;
+            border-radius: 30px; border: 3px solid #FFD700;
+            box-shadow: 0 8px 25px rgba(255,215,0,0.3);
+        }
+        .money-amount { font-size: 22px; font-weight: bold; color: #FFD700; }
+        .top-buttons { display: flex; gap: 12px; }
+        .shop-btn, .pause-btn {
+            width: 50px; height: 50px; background: rgba(255,255,255,0.95);
+            border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-size: 22px; transition: all 0.3s;
+            border: 3px solid #FF69B4; box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        .pause-btn { border-color: #87CEEB; }
+        .shop-btn:hover, .pause-btn:hover { transform: scale(1.15); }
+
+        /* Модальные окна */
+        .modal-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); z-index: 30; display: none;
+            justify-content: center; align-items: center; backdrop-filter: blur(8px);
+        }
+        .settings-panel {
+            background: linear-gradient(180deg, #FFF5EE, #FFE4E1); border-radius: 35px;
+            padding: 35px; width: 90%; max-width: 420px; border: 5px solid white;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5); text-align: center;
+            animation: popIn 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.6) rotate(-5deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .slider-group { margin: 25px 0; text-align: left; }
+        .slider-group label { display: block; color: #666; font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+        .slider-group input[type="range"] { width: 100%; height: 10px; border-radius: 5px; background: linear-gradient(90deg, #FFB6C1, #FF69B4); outline: none; -webkit-appearance: none; cursor: pointer; }
+        .slider-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; border-radius: 50%; background: white; border: 4px solid #FF69B4; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .close-btn {
+            margin-top: 25px; padding: 14px 45px; font-size: 20px; font-weight: bold;
+            color: white; background: linear-gradient(135deg, #FF69B4, #FF85A2);
+            border: 4px solid white; border-radius: 35px; cursor: pointer;
+            box-shadow: 0 8px 25px rgba(255,105,180,0.4); transition: all 0.3s;
+        }
+        .close-btn:hover { transform: scale(1.08); }
+
+        /* Курсор */
+        #custom-cursor {
+            position: fixed; pointer-events: none; z-index: 1000;
+            width: 40px; height: 40px;
+            background: url('image/cursor.png') center/contain no-repeat;
+            transform: translate(-50%, -50%); display: none;
+        }
+
+        /* Кухня */
+        .kitchen-table {
+            position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 15px; align-items: center; z-index: 5;
+            background: rgba(139,90,43,0.8); padding: 20px 30px; border-radius: 20px;
+            border: 4px solid #8B5A2B; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .food-item {
+            width: 60px; height: 60px; cursor: pointer; transition: transform 0.3s;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.3));
+        }
+        .food-item:hover { transform: scale(1.2) translateY(-10px); }
+        .arrow-btn {
+            width: 40px; height: 40px; background: #FFB6C1; border: 3px solid white;
+            border-radius: 50%; cursor: pointer; font-size: 20px; font-weight: bold;
+            color: white; display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+        }
+        .arrow-btn:hover { transform: scale(1.1); background: #FF69B4; }
+
+        /* Ванная */
+        .bath-btn {
+            position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
+            padding: 15px 30px; background: #87CEEB; border: 4px solid white;
+            border-radius: 30px; cursor: pointer; font-size: 20px; color: white;
+            box-shadow: 0 8px 25px rgba(135,206,235,0.4); transition: all 0.3s;
+        }
+        .bath-btn:hover { transform: translateX(-50%) scale(1.1); }
+
+        /* Спальня */
+        .light-switch {
+            position: absolute; top: 30px; right: 30px; width: 50px; height: 50px;
+            background: #FFD700; border: 4px solid white; border-radius: 50%;
+            cursor: pointer; font-size: 24px; display: flex; align-items: center;
+            justify-content: center; box-shadow: 0 5px 20px rgba(255,215,0,0.4);
+            transition: all 0.3s;
+        }
+        .light-switch:hover { transform: scale(1.1); }
+        .blanket {
+            position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
+            width: 250px; z-index: 3;
+        }
+
+        /* Zzz */
+        .zzz-container {
+            position: absolute; top: 8%; left: 58%; z-index: 5;
+        }
+        .zzz {
+            position: absolute; color: #87CEEB; font-weight: bold;
+            font-size: 24px; text-shadow: 0 0 10px rgba(135,206,235,0.8);
+            animation: zzzFloat 2s ease-in-out infinite;
+        }
+        @keyframes zzzFloat {
+            0% { transform: translateY(0) scale(0); opacity: 0; }
+            40% { transform: translateY(-20px) scale(1); opacity: 1; }
+            80% { transform: translateY(-40px) scale(0.5); opacity: 0.5; }
+            100% { transform: translateY(-50px) scale(0); opacity: 0; }
+        }
+
+        /* Магазин */
+        .shop-items {
+            display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;
+            max-height: 60vh; overflow-y: auto;
+        }
+        .shop-item {
+            background: white; border-radius: 15px; padding: 10px; text-align: center;
+            border: 3px solid #FFB6C1; cursor: pointer; transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .shop-item:hover { transform: scale(1.1); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .shop-item img { width: 60px; height: 60px; }
+        .shop-item .price { color: #FFD700; font-weight: bold; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Интро -->
+        <div id="intro-scene" class="scene visible">
+            <div class="intro-logo-container">
+                <img src="image/intro_logo.png" alt="Интро лого" class="intro-logo">
+            </div>
+            <div class="countdown-text">✨ Загрузка... ✨</div>
+        </div>
+
+        <!-- Белый переход -->
+        <div id="white-overlay"></div>
+
+        <!-- Меню -->
+        <div id="menu-scene" class="scene">
+            <div class="menu-content">
+                <img src="image/logo.png" alt="Логотип" class="menu-logo">
+                <div class="menu-buttons">
+                    <button class="menu-btn" id="play-btn">🎮 Играть</button>
+                    <button class="menu-btn settings" id="settings-btn">⚙️ Настройки</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Загрузка -->
+        <div id="loading-screen">
+            <h2 style="color:#FF69B4;font-size:32px;">✨ Загрузка игры...</h2>
+            <div class="loading-bar"><div class="loading-progress" id="loading-progress"></div></div>
+            <p style="color:#FF85A2;">Пожалуйста, подождите...</p>
+        </div>
+
+        <!-- Письмо -->
+        <div id="letter-overlay">
+            <div class="letter">
+                <button class="close-letter" id="close-letter">✕</button>
+                <h2 style="color:#FF69B4;">💌 Дорогой друг!</h2>
+                <p>Пожалуйста, позаботься о Пете! Ему нужно:</p>
+                <ul style="list-style:none;padding:0;color:#666;">
+                    <li>🍎 Накормить вкусной едой</li>
+                    <li>🎮 Поиграть и повеселиться</li>
+                    <li>🛁 Помыть в теплой ванне</li>
+                    <li>😴 Уложить спать в кроватку</li>
+                </ul>
+                <p style="color:#FF69B4;font-style:italic;">С любовью, твой Петя 💖</p>
+            </div>
+        </div>
+
+        <!-- Игра -->
+        <div id="game-scene">
+            <div class="top-bar">
+                <div class="money-display">
+                    <span>💰</span>
+                    <span class="money-amount" id="money-amount">0</span>
+                </div>
+                <div class="top-buttons">
+                    <button class="shop-btn" id="shop-btn">🛒</button>
+                    <button class="pause-btn" id="pause-btn">⏸</button>
+                </div>
+            </div>
+            <div class="petya-container" id="petya-container">
+                <img src="image/petya_sad1.png" alt="Петя" class="petya-img" id="petya-img">
+            </div>
+            <div class="icons-bar" id="icons-bar">
+                <div class="icon-item" data-action="happy"><img src="image/happy_icon.png" class="icon-img"><div class="icon-overlay" id="happy-overlay" style="height:40%;background:#F44336;"></div></div>
+                <div class="icon-item" data-action="hungry"><img src="image/hungry_icon.png" class="icon-img"><div class="icon-overlay" id="hungry-overlay" style="height:20%;background:#4CAF50;"></div></div>
+                <div class="icon-item" data-action="shower"><img src="image/shower_icon.png" class="icon-img"><div class="icon-overlay" id="shower-overlay" style="height:30%;background:#4CAF50;"></div></div>
+                <div class="icon-item" data-action="sleep"><img src="image/sleep_icon.png" class="icon-img"><div class="icon-overlay" id="sleep-overlay" style="height:60%;background:#FFA500;"></div></div>
+            </div>
+        </div>
+
+        <!-- Настройки -->
+        <div class="modal-overlay" id="settings-modal">
+            <div class="settings-panel">
+                <h2 style="color:#FF69B4;">🎵 Настройки</h2>
+                <div class="slider-group"><label>🔊 Музыка</label><input type="range" id="music-volume" min="0" max="100" value="70"></div>
+                <div class="slider-group"><label>🔔 Звуки</label><input type="range" id="sfx-volume" min="0" max="100" value="80"></div>
+                <button class="close-btn" id="close-settings">Готово ✨</button>
+            </div>
+        </div>
+
+        <!-- Пауза -->
+        <div class="modal-overlay" id="pause-modal">
+            <div class="settings-panel">
+                <h2 style="color:#FF69B4;">⏸ Пауза</h2>
+                <button class="close-btn" id="resume-btn" style="margin-bottom:15px;">▶ Продолжить</button>
+                <button class="close-btn" id="quit-btn" style="background:linear-gradient(135deg,#FF4444,#FF6666);">🚪 Выйти</button>
+            </div>
+        </div>
+
+        <!-- Магазин -->
+        <div class="modal-overlay" id="shop-modal">
+            <div class="settings-panel">
+                <h2 style="color:#FF69B4;">🛒 Магазин</h2>
+                <div class="shop-items">
+                    <div class="shop-item" data-item="apple"><img src="image/apple.png"><div class="price">🍎 30₽</div></div>
+                    <div class="shop-item" data-item="chocolate"><img src="image/chocolate.png"><div class="price">🍫 30₽</div></div>
+                    <div class="shop-item" data-item="cake"><img src="image/cake.png"><div class="price">🎂 30₽</div></div>
+                    <div class="shop-item" data-item="burger"><img src="image/burger.png"><div class="price">🍔 30₽</div></div>
+                    <div class="shop-item" data-item="chicken"><img src="image/chicken.png"><div class="price">🍗 30₽</div></div>
+                </div>
+                <button class="close-btn" id="close-shop">Закрыть ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Курсор -->
+    <div id="custom-cursor"></div>
+
+    <script>
+        (function() {
+            // Аудио менеджер
+            const audio = {
+                musicVol: 0.7, sfxVol: 0.8, current: null,
+                init() {
+                    const m = localStorage.getItem('petya_musicVolume');
+                    const s = localStorage.getItem('petya_sfxVolume');
+                    if (m) this.musicVol = parseFloat(m);
+                    if (s) this.sfxVol = parseFloat(s);
+                    document.getElementById('music-volume').value = this.musicVol * 100;
+                    document.getElementById('sfx-volume').value = this.sfxVol * 100;
+                },
+                playMusic(src) {
+                    if (this.current) { this.current.pause(); }
+                    this.current = new Audio('audio/' + src);
+                    this.current.loop = true;
+                    this.current.volume = this.musicVol;
+                    this.current.play().catch(() => {});
+                },
+                playSound(src) {
+                    const s = new Audio('audio/' + src);
+                    s.volume = this.sfxVol;
+                    s.play().catch(() => {});
+                },
+                setMusic(v) { this.musicVol = v; if (this.current) this.current.volume = v; localStorage.setItem('petya_musicVolume', v); },
+                setSfx(v) { this.sfxVol = v; localStorage.setItem('petya_sfxVolume', v); },
+                stop() { if (this.current) { this.current.pause(); this.current = null; } }
+            };
+
+            // Игровое состояние
+            const state = {
+                happiness: 60, hunger: 80, cleanliness: 70, energy: 40,
+                money: parseInt(localStorage.getItem('petya_money') || '0'),
+                room: 'living_room', night: false, inventory: {apple:5, chocolate:5, cake:5, burger:5, chicken:5}
+            };
+
+            // DOM
+            const intro = document.getElementById('intro-scene');
+            const menu = document.getElementById('menu-scene');
+            const white = document.getElementById('white-overlay');
+            const loading = document.getElementById('loading-screen');
+            const letter = document.getElementById('letter-overlay');
+            const game = document.getElementById('game-scene');
+            const petyaImg = document.getElementById('petya-img');
+            const moneyEl = document.getElementById('money-amount');
+            const cursor = document.getElementById('custom-cursor');
+            const settingsModal = document.getElementById('settings-modal');
+            const pauseModal = document.getElementById('pause-modal');
+            const shopModal = document.getElementById('shop-modal');
+
+            function whiteTransition(cb) {
+                white.classList.add('active');
+                setTimeout(() => { cb(); setTimeout(() => white.classList.remove('active'), 400); }, 600);
+            }
+
+            function updateOverlays() {
+                const stats = { happy: state.happiness, hungry: state.hunger, shower: state.cleanliness, sleep: state.energy };
+                for (let [key, val] of Object.entries(stats)) {
+                    const overlay = document.getElementById(key + '-overlay');
+                    if (!overlay) continue;
+                    const red = 100 - val;
+                    overlay.style.height = red + '%';
+                    if (val >= 80) overlay.style.background = '#4CAF50';
+                    else if (val >= 60) overlay.style.background = '#8BC34A';
+                    else if (val >= 40) overlay.style.background = '#FFA500';
+                    else if (val >= 20) overlay.style.background = '#FF5722';
+                    else overlay.style.background = '#F44336';
+                }
+            }
+
+            function updatePet() {
+                const avg = (state.happiness + state.hunger + state.cleanliness) / 3;
+                if (state.night) petyaImg.src = 'image/petya_sleep.png';
+                else if (avg >= 80) petyaImg.src = 'image/petya_normal.png';
+                else if (avg >= 60) petyaImg.src = 'image/petya_sad1.png';
+                else if (avg >= 40) petyaImg.src = 'image/petya_sad2.png';
+                else petyaImg.src = 'image/petya_sad3.png';
+            }
+
+            function reward() {
+                state.money += 50;
+                moneyEl.textContent = state.money;
+                localStorage.setItem('petya_money', state.money);
+                audio.playSound('yeah.mp3');
+                setTimeout(() => audio.playSound('money.mp3'), 300);
+                petyaImg.src = 'image/petya_happy.png';
+                petyaImg.style.animation = 'petyaJump 0.6s ease';
+                setTimeout(() => { petyaImg.style.animation = ''; updatePet(); }, 600);
+            }
+
+            function save() {
+                localStorage.setItem('petya_money', state.money);
+                localStorage.setItem('petya_gameState', JSON.stringify(state));
+            }
+
+            // Инициализация
+            audio.init();
+
+            // Интро 8 сек
+            setTimeout(() => {
+                whiteTransition(() => {
+                    intro.classList.add('hidden'); intro.classList.remove('visible');
+                    menu.classList.remove('hidden'); menu.classList.add('visible');
+                    audio.playMusic('main_menu.mp3');
+                });
+            }, 8000);
+
+            // Играть
+            document.getElementById('play-btn').addEventListener('click', () => {
+                audio.playSound('button.mp3');
+                whiteTransition(() => {
+                    menu.classList.add('hidden'); menu.classList.remove('visible');
+                    loading.style.display = 'flex';
+                    const prog = document.getElementById('loading-progress');
+                    let w = 0;
+                    const int = setInterval(() => {
+                        w += Math.random() * 15 + 5;
+                        if (w >= 100) { w = 100; clearInterval(int); prog.style.width = '100%';
+                            setTimeout(() => { loading.style.display = 'none'; letter.style.display = 'flex'; }, 600); }
+                        prog.style.width = w + '%';
+                    }, 250);
+                });
+            });
+
+            // Закрыть письмо
+            document.getElementById('close-letter').addEventListener('click', () => {
+                audio.playSound('button.mp3');
+                letter.style.display = 'none';
+                game.style.display = 'block';
+                audio.stop();
+                audio.playMusic('petya_day.mp3');
+                moneyEl.textContent = state.money;
+                updateOverlays();
+                updatePet();
+                startLoop();
+            });
+
+            // Настройки
+            document.getElementById('settings-btn').addEventListener('click', () => { audio.playSound('button.mp3'); settingsModal.style.display = 'flex'; });
+            document.getElementById('close-settings').addEventListener('click', () => { audio.playSound('button.mp3'); settingsModal.style.display = 'none'; });
+            document.getElementById('music-volume').addEventListener('input', e => audio.setMusic(e.target.value / 100));
+            document.getElementById('sfx-volume').addEventListener('input', e => audio.setSfx(e.target.value / 100));
+
+            // Пауза
+            document.getElementById('pause-btn').addEventListener('click', () => { audio.playSound('button.mp3'); pauseModal.style.display = 'flex'; });
+            document.getElementById('resume-btn').addEventListener('click', () => { audio.playSound('button.mp3'); pauseModal.style.display = 'none'; });
+            document.getElementById('quit-btn').addEventListener('click', () => {
+                save(); audio.playSound('button.mp3'); pauseModal.style.display = 'none'; game.style.display = 'none';
+                whiteTransition(() => { menu.classList.remove('hidden'); menu.classList.add('visible'); audio.stop(); audio.playMusic('main_menu.mp3'); });
+            });
+
+            // Магазин
+            document.getElementById('shop-btn').addEventListener('click', () => { audio.playSound('button.mp3'); shopModal.style.display = 'flex'; });
+            document.getElementById('close-shop').addEventListener('click', () => { audio.playSound('button.mp3'); shopModal.style.display = 'none'; });
+            document.querySelectorAll('.shop-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    if (state.money >= 30) {
+                        state.money -= 30;
+                        const food = item.dataset.item;
+                        state.inventory[food] = (state.inventory[food] || 0) + 1;
+                        moneyEl.textContent = state.money;
+                        audio.playSound('money.mp3');
+                        alert('Куплено: ' + food + '! Осталось денег: ' + state.money + '₽');
+                    } else {
+                        alert('Недостаточно денег! Нужно 30₽');
+                    }
+                });
+            });
+
+            // Поглаживание
+            let petting = false;
+            document.getElementById('petya-container').addEventListener('mousedown', () => { if (state.room === 'living_room') petting = true; });
+            document.addEventListener('mouseup', () => { petting = false; updatePet(); });
+            document.addEventListener('mousemove', () => {
+                if (petting && state.room === 'living_room') {
+                    petyaImg.src = 'image/petya_petting.png';
+                    state.happiness = Math.min(100, state.happiness + 0.4);
+                    updateOverlays();
+                    if (state.happiness >= 100) { state.happiness = 100; updateOverlays(); reward(); }
+                }
+            });
+
+            // Иконки
+            document.querySelectorAll('.icon-item').forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const action = icon.dataset.action;
+                    audio.playSound('button.mp3');
+                    switch(action) {
+                        case 'happy':
+                            state.room = 'living_room';
+                            game.style.backgroundImage = "url('image/the_living_room.png')";
+                            removeKitchen(); removeBath(); removeBedroom();
+                            break;
+                        case 'hungry':
+                            state.room = 'kitchen';
+                            game.style.backgroundImage = "url('image/kitchen.png')";
+                            removeBath(); removeBedroom();
+                            showKitchen();
+                            break;
+                        case 'shower':
+                            state.room = 'bathroom';
+                            game.style.backgroundImage = "url('image/bathroom.png')";
+                            removeKitchen(); removeBedroom();
+                            showBath();
+                            break;
+                        case 'sleep':
+                            state.room = 'bedroom';
+                            game.style.backgroundImage = "url('image/bedroom_light.png')";
+                            removeKitchen(); removeBath();
+                            showBedroom();
+                            break;
+                    }
+                });
+            });
+
+            // Кухня
+            function showKitchen() {
+                const existing = document.getElementById('kitchen-table');
+                if (existing) return;
+                const table = document.createElement('div');
+                table.className = 'kitchen-table';
+                table.id = 'kitchen-table';
+                const foods = ['apple', 'chocolate', 'cake', 'burger', 'chicken'];
+                const leftArr = document.createElement('button');
+                leftArr.className = 'arrow-btn'; leftArr.textContent = '◀';
+                const rightArr = document.createElement('button');
+                rightArr.className = 'arrow-btn'; rightArr.textContent = '▶';
+                let idx = 0;
+                const foodImg = document.createElement('img');
+                foodImg.className = 'food-item';
+                foodImg.src = 'image/' + foods[0] + '.png';
+                foodImg.style.width = '80px'; foodImg.style.height = '80px';
+                const countSpan = document.createElement('span');
+                countSpan.style.cssText = 'color:white;font-weight:bold;font-size:18px;';
+                countSpan.textContent = 'x' + (state.inventory[foods[0]] || 0);
+                
+                function updateFood() {
+                    foodImg.src = 'image/' + foods[idx] + '.png';
+                    countSpan.textContent = 'x' + (state.inventory[foods[idx]] || 0);
+                }
+                leftArr.onclick = () => { idx = (idx - 1 + foods.length) % foods.length; updateFood(); };
+                rightArr.onclick = () => { idx = (idx + 1) % foods.length; updateFood(); };
+                
+                foodImg.onclick = () => {
+                    const food = foods[idx];
+                    if ((state.inventory[food] || 0) > 0) {
+                        state.inventory[food]--;
+                        state.hunger = Math.min(100, state.hunger + 20);
+                        updateFood();
+                        updateOverlays();
+                        petyaImg.src = 'image/petya_eating.png';
+                        audio.playSound('eating.mp3');
+                        setTimeout(() => { updatePet(); if (state.hunger >= 100) { state.hunger = 100; updateOverlays(); reward(); } }, 3000);
+                    } else {
+                        alert('Нет ' + food + '! Купите в магазине.');
+                    }
+                };
+                
+                table.appendChild(leftArr);
+                table.appendChild(foodImg);
+                table.appendChild(countSpan);
+                table.appendChild(rightArr);
+                game.appendChild(table);
+            }
+            function removeKitchen() { const t = document.getElementById('kitchen-table'); if (t) t.remove(); }
+
+            // Ванная
+            function showBath() {
+                const existing = document.getElementById('bath-btn');
+                if (existing) return;
+                const btn = document.createElement('button');
+                btn.className = 'bath-btn'; btn.id = 'bath-btn'; btn.textContent = '🛁 Принять ванну';
+                btn.onclick = () => {
+                    state.cleanliness = Math.min(100, state.cleanliness + 30);
+                    updateOverlays();
+                    audio.playSound('bubble.mp3');
+                    petyaImg.src = 'image/petya_is_dirty.png';
+                    setTimeout(() => { updatePet(); if (state.cleanliness >= 100) { state.cleanliness = 100; updateOverlays(); reward(); } }, 2000);
+                };
+                game.appendChild(btn);
+            }
+            function removeBath() { const b = document.getElementById('bath-btn'); if (b) b.remove(); }
+
+            // Спальня
+            function showBedroom() {
+                const existing = document.getElementById('light-switch');
+                if (existing) return;
+                const sw = document.createElement('button');
+                sw.className = 'light-switch'; sw.id = 'light-switch'; sw.textContent = '💡';
+                sw.onclick = () => {
+                    state.night = !state.night;
+                    audio.playSound('switch.mp3');
+                    if (state.night) {
+                        game.style.backgroundImage = "url('image/bedroom_dark.png')";
+                        petyaImg.src = 'image/petya_sleep.png';
+                        audio.stop(); audio.playMusic('petya_night.mp3');
+                        showZzz();
+                    } else {
+                        game.style.backgroundImage = "url('image/bedroom_light.png')";
+                        updatePet();
+                        audio.stop(); audio.playMusic('petya_day.mp3');
+                        hideZzz();
+                        state.energy = 100; updateOverlays(); reward();
+                    }
+                };
+                game.appendChild(sw);
+            }
+            function removeBedroom() { const s = document.getElementById('light-switch'); if (s) s.remove(); hideZzz(); }
+
+            function showZzz() {
+                const c = document.createElement('div'); c.className = 'zzz-container'; c.id = 'zzz-container';
+                for (let i = 0; i < 3; i++) {
+                    const z = document.createElement('div'); z.className = 'zzz'; z.textContent = 'Z';
+                    z.style.animationDelay = i * 0.7 + 's'; z.style.left = i * 18 + 'px'; c.appendChild(z);
+                }
+                game.appendChild(c);
+            }
+            function hideZzz() { const z = document.getElementById('zzz-container'); if (z) z.remove(); }
+
+            // Игровой цикл
+            function startLoop() {
+                setInterval(() => {
+                    if (!state.night && game.style.display === 'block') {
+                        state.happiness = Math.max(0, state.happiness - 0.1);
+                        state.hunger = Math.max(0, state.hunger - 0.15);
+                        state.cleanliness = Math.max(0, state.cleanliness - 0.08);
+                        state.energy = Math.max(0, state.energy - 0.12);
+                        updateOverlays();
+                        updatePet();
+                    } else if (state.night) {
+                        state.energy = Math.min(100, state.energy + 0.6);
+                        updateOverlays();
+                    }
+                    if (Math.random() < 0.05) save();
+                }, 5000);
+            }
+
+            // Курсор
+            document.addEventListener('mousemove', e => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+                cursor.style.display = 'block';
+            });
+
+            // Сохранение при выходе
+            window.addEventListener('beforeunload', save);
+
+            console.log('✅ Игра "Мой любимый Петя" готова!');
+        })();
+    </script>
+</body>
+</html>
