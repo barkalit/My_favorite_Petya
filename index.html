@@ -211,7 +211,7 @@
         }
         .petya-container {
             position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%);
-            z-index: 12; cursor: pointer; transition: transform 0.3s;
+            z-index: 10; cursor: pointer; transition: transform 0.3s;
         }
         .petya-img {
             width: 550px; height: auto;
@@ -227,7 +227,7 @@
         /* Иконки */
         .icons-bar {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 20px; z-index: 15;
+            display: flex; gap: 20px; z-index: 18;
             background: rgba(255,255,255,0.95); padding: 15px 25px;
             border-radius: 45px; border: 4px solid #FFB6C1;
             box-shadow: 0 15px 40px rgba(0,0,0,0.2);
@@ -238,13 +238,15 @@
             background: white; overflow: hidden;
         }
         .icon-item:hover { transform: translateY(-5px) scale(1.1); border-color: #FF69B4; box-shadow: 0 10px 30px rgba(255,105,180,0.5); }
-        .icon-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; position: relative; z-index: 3; }
+        .icon-img { 
+            width: 100%; height: 100%; border-radius: 50%; object-fit: cover; 
+            position: relative; z-index: 2; 
+        }
         .icon-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
             transition: all 0.8s ease;
             border-radius: 50%;
             pointer-events: none;
-            clip-path: circle(50% at 50% 50%);
         }
         .icon-progress-green {
             position: absolute; bottom: 0; left: 0; width: 100%;
@@ -468,10 +470,10 @@
                 <img src="image/petya_sad1.png" alt="Петя" class="petya-img" id="petya-img">
             </div>
             <div class="icons-bar" id="icons-bar">
-                <div class="icon-item" data-action="happy"><img src="image/happy_icon.png" class="icon-img"><div class="icon-overlay" id="happy-overlay" style="background:linear-gradient(to top,#4CAF50 60%,#F44336 60%);"></div></div>
-                <div class="icon-item" data-action="hungry"><img src="image/hungry_icon.png" class="icon-img"><div class="icon-overlay" id="hungry-overlay" style="background:linear-gradient(to top,#4CAF50 20%,#F44336 20%);"></div></div>
-                <div class="icon-item" data-action="shower"><img src="image/shower_icon.png" class="icon-img"><div class="icon-overlay" id="shower-overlay" style="background:linear-gradient(to top,#4CAF50 30%,#F44336 30%);"></div></div>
-                <div class="icon-item" data-action="sleep"><img src="image/sleep_icon.png" class="icon-img"><div class="icon-overlay" id="sleep-overlay" style="background:linear-gradient(to top,#FFA500 60%,#F44336 60%);"></div></div>
+                <div class="icon-item" data-action="happy"><img src="image/happy_icon.png" class="icon-img"><div class="icon-overlay" id="happy-overlay" style="background:linear-gradient(to top,#4CAF50 60%,transparent 60%),linear-gradient(to top,#F44336 0%,#F44336 100%);"></div></div>
+                <div class="icon-item" data-action="hungry"><img src="image/hungry_icon.png" class="icon-img"><div class="icon-overlay" id="hungry-overlay" style="background:linear-gradient(to top,#4CAF50 20%,transparent 20%),linear-gradient(to top,#F44336 0%,#F44336 100%);"></div></div>
+                <div class="icon-item" data-action="shower"><img src="image/shower_icon.png" class="icon-img"><div class="icon-overlay" id="shower-overlay" style="background:linear-gradient(to top,#4CAF50 30%,transparent 30%),linear-gradient(to top,#F44336 0%,#F44336 100%);"></div></div>
+                <div class="icon-item" data-action="sleep"><img src="image/sleep_icon.png" class="icon-img"><div class="icon-overlay" id="sleep-overlay" style="background:linear-gradient(to top,#FFA500 60%,transparent 60%),linear-gradient(to top,#F44336 0%,#F44336 100%);"></div></div>
             </div>
         </div>
 
@@ -576,7 +578,7 @@
                     const overlay = document.getElementById(key + '-overlay');
                     if (!overlay) continue;
                     // Green from bottom, red on top
-                    overlay.style.background = `linear-gradient(to top, #4CAF50 ${val}%, #F44336 ${val}%)`;
+                    overlay.style.background = `linear-gradient(to top, #4CAF50 ${val}%, transparent ${val}%), linear-gradient(to top, #F44336 0%, #F44336 100%)`;
                 }
             }
 
