@@ -214,7 +214,7 @@
             z-index: 4; cursor: pointer; transition: transform 0.3s;
         }
         .petya-img {
-            width: 280px; height: auto;
+            width: 380px; height: auto;
             filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
         }
         @keyframes petyaJump {
@@ -240,7 +240,14 @@
         .icon-item:hover { transform: translateY(-5px) scale(1.1); border-color: #FF69B4; box-shadow: 0 10px 30px rgba(255,105,180,0.5); }
         .icon-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; position: relative; z-index: 1; }
         .icon-overlay {
-            position: absolute; bottom: 0; left: 0; width: 100%; z-index: 2;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+            transition: all 0.8s ease;
+            border-radius: 50%;
+            pointer-events: none;
+            clip-path: circle(50% at 50% 50%);
+        }
+        .icon-progress-green {
+            position: absolute; bottom: 0; left: 0; width: 100%;
             transition: height 0.8s ease, background 0.8s ease;
             border-radius: 0 0 50% 50%;
             pointer-events: none;
@@ -299,10 +306,30 @@
         /* Курсор */
         #custom-cursor {
             position: fixed; pointer-events: none; z-index: 1000;
-            width: 40px; height: 40px;
+            width: 50px; height: 50px;
             background: url('image/cursor.png') center/contain no-repeat;
             transform: translate(-50%, -50%); display: none;
         }
+        .stylus-cursor {
+            background: url('image/stylus_cursor.png') center/contain no-repeat !important;
+            width: 60px !important; height: 60px !important;
+        }
+        .sponge-cursor {
+            background: url('image/sponge_cursor.png') center/contain no-repeat !important;
+        }
+        .shower-cursor {
+            background: url('image/shower_cursor.png') center/contain no-repeat !important;
+        }
+        .stylus-holder {
+            position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+            width: 70px; height: 90px; background: rgba(255,255,255,0.8);
+            border-radius: 15px; border: 3px solid #FFB6C1;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 100;
+            transition: all 0.3s;
+        }
+        .stylus-holder:hover { transform: translateY(-50%) scale(1.1); }
+        .stylus-holder img { width: 50px; height: 70px; }
 
         /* Кухня */
         .kitchen-table {
@@ -441,10 +468,10 @@
                 <img src="image/petya_sad1.png" alt="Петя" class="petya-img" id="petya-img">
             </div>
             <div class="icons-bar" id="icons-bar">
-                <div class="icon-item" data-action="happy"><img src="image/happy_icon.png" class="icon-img"><div class="icon-overlay" id="happy-overlay" style="height:40%;background:#F44336;"></div></div>
-                <div class="icon-item" data-action="hungry"><img src="image/hungry_icon.png" class="icon-img"><div class="icon-overlay" id="hungry-overlay" style="height:20%;background:#4CAF50;"></div></div>
-                <div class="icon-item" data-action="shower"><img src="image/shower_icon.png" class="icon-img"><div class="icon-overlay" id="shower-overlay" style="height:30%;background:#4CAF50;"></div></div>
-                <div class="icon-item" data-action="sleep"><img src="image/sleep_icon.png" class="icon-img"><div class="icon-overlay" id="sleep-overlay" style="height:60%;background:#FFA500;"></div></div>
+                <div class="icon-item" data-action="happy"><img src="image/happy_icon.png" class="icon-img"><div class="icon-overlay" id="happy-overlay" style="background:linear-gradient(to top,#4CAF50 60%,#F44336 60%);"></div></div>
+                <div class="icon-item" data-action="hungry"><img src="image/hungry_icon.png" class="icon-img"><div class="icon-overlay" id="hungry-overlay" style="background:linear-gradient(to top,#4CAF50 20%,#F44336 20%);"></div></div>
+                <div class="icon-item" data-action="shower"><img src="image/shower_icon.png" class="icon-img"><div class="icon-overlay" id="shower-overlay" style="background:linear-gradient(to top,#4CAF50 30%,#F44336 30%);"></div></div>
+                <div class="icon-item" data-action="sleep"><img src="image/sleep_icon.png" class="icon-img"><div class="icon-overlay" id="sleep-overlay" style="background:linear-gradient(to top,#FFA500 60%,#F44336 60%);"></div></div>
             </div>
         </div>
 
@@ -518,9 +545,10 @@
 
             // Игровое состояние
             const state = {
-                happiness: 60, hunger: 80, cleanliness: 70, energy: 40,
+                happiness: 60, hunger: 20, cleanliness: 30, energy: 60,
                 money: parseInt(localStorage.getItem('petya_money') || '0'),
-                room: 'living_room', night: false, inventory: {apple:5, chocolate:5, cake:5, burger:5, chicken:5}
+                room: 'living_room', night: false, inventory: {apple:5, chocolate:5, cake:5, burger:5, chicken:5},
+                stylusTaken: false
             };
 
             // DOM
@@ -547,23 +575,32 @@
                 for (let [key, val] of Object.entries(stats)) {
                     const overlay = document.getElementById(key + '-overlay');
                     if (!overlay) continue;
-                    const red = 100 - val;
-                    overlay.style.height = red + '%';
-                    if (val >= 80) overlay.style.background = '#4CAF50';
-                    else if (val >= 60) overlay.style.background = '#8BC34A';
-                    else if (val >= 40) overlay.style.background = '#FFA500';
-                    else if (val >= 20) overlay.style.background = '#FF5722';
-                    else overlay.style.background = '#F44336';
+                    // Green from bottom, red on top
+                    overlay.style.background = `linear-gradient(to top, #4CAF50 ${val}%, #F44336 ${val}%)`;
                 }
             }
 
             function updatePet() {
                 const avg = (state.happiness + state.hunger + state.cleanliness) / 3;
-                if (state.night) petyaImg.src = 'image/petya_sleep.png';
-                else if (avg >= 80) petyaImg.src = 'image/petya_normal.png';
-                else if (avg >= 60) petyaImg.src = 'image/petya_sad1.png';
-                else if (avg >= 40) petyaImg.src = 'image/petya_sad2.png';
-                else petyaImg.src = 'image/petya_sad3.png';
+                if (state.night && state.room === 'bedroom') {
+                    petyaImg.src = 'image/petya_sleep.png';
+                } else if (state.energy <= 20 && !state.night) {
+                    // Устал - зевает
+                    petyaImg.src = 'image/petya_tired.png';
+                    if (Math.random() < 0.05) {
+                        audio.playSound('yawn.mp3');
+                        petyaImg.src = 'image/petya_yawn.png';
+                        setTimeout(() => { if (!state.night) updatePet(); }, 2000);
+                    }
+                } else if (avg >= 80) {
+                    petyaImg.src = 'image/petya_normal.png';
+                } else if (avg >= 60) {
+                    petyaImg.src = 'image/petya_sad1.png';
+                } else if (avg >= 40) {
+                    petyaImg.src = 'image/petya_sad2.png';
+                } else {
+                    petyaImg.src = 'image/petya_sad3.png';
+                }
             }
 
             function reward() {
@@ -621,6 +658,7 @@
                 moneyEl.textContent = state.money;
                 updateOverlays();
                 updatePet();
+                showStylusHolder();
                 startLoop();
             });
 
@@ -656,18 +694,62 @@
                 });
             });
 
-            // Поглаживание
+            // Поглаживание и перо
             let petting = false;
-            document.getElementById('petya-container').addEventListener('mousedown', () => { if (state.room === 'living_room') petting = true; });
-            document.addEventListener('mouseup', () => { petting = false; updatePet(); });
+            
+            document.getElementById('petya-container').addEventListener('mousedown', () => { 
+                if (state.room === 'living_room') petting = true; 
+            });
+            document.addEventListener('mouseup', () => { 
+                petting = false; 
+                updatePet(); 
+            });
             document.addEventListener('mousemove', () => {
                 if (petting && state.room === 'living_room') {
-                    petyaImg.src = 'image/petya_petting.png';
-                    state.happiness = Math.min(100, state.happiness + 0.4);
+                    if (state.stylusTaken) {
+                        petyaImg.src = 'image/petya_laugh.png';
+                        audio.playSound('laugh.mp3');
+                        state.happiness = Math.min(100, state.happiness + 1.5);
+                    } else {
+                        petyaImg.src = 'image/petya_petting.png';
+                        state.happiness = Math.min(100, state.happiness + 0.4);
+                    }
                     updateOverlays();
-                    if (state.happiness >= 100) { state.happiness = 100; updateOverlays(); reward(); }
+                    if (state.happiness >= 100) { 
+                        state.happiness = 100; 
+                        updateOverlays(); 
+                        reward(); 
+                    }
                 }
             });
+            
+            // Держатель для пера
+            function showStylusHolder() {
+                const existing = document.getElementById('stylus-holder');
+                if (existing || state.room !== 'living_room') return;
+                const holder = document.createElement('div');
+                holder.className = 'stylus-holder';
+                holder.id = 'stylus-holder';
+                holder.innerHTML = '<img src="image/stylus_cursor.png" alt="Перо">';
+                holder.onclick = () => {
+                    audio.playSound('button.mp3');
+                    state.stylusTaken = !state.stylusTaken;
+                    if (state.stylusTaken) {
+                        cursor.classList.add('stylus-cursor');
+                        holder.style.opacity = '0.3';
+                    } else {
+                        cursor.classList.remove('stylus-cursor');
+                        holder.style.opacity = '1';
+                    }
+                };
+                game.appendChild(holder);
+            }
+            function removeStylusHolder() { 
+                const h = document.getElementById('stylus-holder'); 
+                if (h) h.remove(); 
+                state.stylusTaken = false;
+                cursor.classList.remove('stylus-cursor');
+            }
 
             // Иконки
             document.querySelectorAll('.icon-item').forEach(icon => {
@@ -678,24 +760,25 @@
                         case 'happy':
                             state.room = 'living_room';
                             game.style.backgroundImage = "url('image/the_living_room.png')";
-                            removeKitchen(); removeBath(); removeBedroom();
+                            removeKitchen(); removeBath(); removeBedroom(); removeStylusHolder();
+                            showStylusHolder();
                             break;
                         case 'hungry':
                             state.room = 'kitchen';
                             game.style.backgroundImage = "url('image/kitchen.png')";
-                            removeBath(); removeBedroom();
+                            removeBath(); removeBedroom(); removeStylusHolder();
                             showKitchen();
                             break;
                         case 'shower':
                             state.room = 'bathroom';
                             game.style.backgroundImage = "url('image/bathroom.png')";
-                            removeKitchen(); removeBedroom();
+                            removeKitchen(); removeBedroom(); removeStylusHolder();
                             showBath();
                             break;
                         case 'sleep':
                             state.room = 'bedroom';
                             game.style.backgroundImage = "url('image/bedroom_light.png')";
-                            removeKitchen(); removeBath();
+                            removeKitchen(); removeBath(); removeStylusHolder();
                             showBedroom();
                             break;
                     }
@@ -730,6 +813,7 @@
                 leftArr.onclick = () => { idx = (idx - 1 + foods.length) % foods.length; updateFood(); };
                 rightArr.onclick = () => { idx = (idx + 1) % foods.length; updateFood(); };
                 
+                let feedCount = 0;
                 foodImg.onclick = () => {
                     const food = foods[idx];
                     if ((state.inventory[food] || 0) > 0) {
@@ -737,9 +821,20 @@
                         state.hunger = Math.min(100, state.hunger + 20);
                         updateFood();
                         updateOverlays();
-                        petyaImg.src = 'image/petya_eating.png';
-                        audio.playSound('eating.mp3');
-                        setTimeout(() => { updatePet(); if (state.hunger >= 100) { state.hunger = 100; updateOverlays(); reward(); } }, 3000);
+                        petyaImg.src = 'image/petya_open_mouth.png';
+                        setTimeout(() => {
+                            petyaImg.src = 'image/petya_eating.png';
+                            audio.playSound('eating.mp3');
+                        }, 300);
+                        feedCount++;
+                        setTimeout(() => { 
+                            updatePet(); 
+                            if (state.hunger >= 100) { 
+                                state.hunger = 100; 
+                                updateOverlays(); 
+                                reward(); 
+                            } 
+                        }, 3000);
                     } else {
                         alert('Нет ' + food + '! Купите в магазине.');
                     }
@@ -753,39 +848,92 @@
             }
             function removeKitchen() { const t = document.getElementById('kitchen-table'); if (t) t.remove(); }
 
-            // Ванная
+            // Ванная с губкой и душем
+            let bathStep = 0; // 0=none, 1=in tub, 2=soaped, 3=clean
             function showBath() {
                 const existing = document.getElementById('bath-btn');
                 if (existing) return;
                 const btn = document.createElement('button');
                 btn.className = 'bath-btn'; btn.id = 'bath-btn'; btn.textContent = '🛁 Принять ванну';
                 btn.onclick = () => {
-                    state.cleanliness = Math.min(100, state.cleanliness + 30);
-                    updateOverlays();
-                    audio.playSound('bubble.mp3');
-                    petyaImg.src = 'image/petya_is_dirty.png';
-                    setTimeout(() => { updatePet(); if (state.cleanliness >= 100) { state.cleanliness = 100; updateOverlays(); reward(); } }, 2000);
+                    btn.remove();
+                    // Петя в ванне грязный
+                    petyaImg.src = 'image/petya_is_dirty_naked.png';
+                    game.style.backgroundImage = "url('image/in_the_bathtub.png')";
+                    bathStep = 1;
+                    
+                    // Губка курсор
+                    cursor.classList.add('sponge-cursor');
+                    
+                    // Мылим Петю
+                    const soapInterval = setInterval(() => {
+                        if (bathStep === 1 && state.room === 'bathroom') {
+                            petyaImg.src = 'image/petya_is_dirty_naked.png';
+                            audio.playSound('bubble.mp3');
+                            bathStep = 2;
+                            clearInterval(soapInterval);
+                            
+                            // Через время переходим к душу
+                            setTimeout(() => {
+                                if (bathStep === 2) {
+                                    cursor.classList.remove('sponge-cursor');
+                                    cursor.classList.add('shower-cursor');
+                                    bathStep = 3;
+                                    // Смываем пену
+                                    petyaImg.src = 'image/petya_is_clean_naked.png';
+                                    audio.playSound('shower.mp3');
+                                    
+                                    setTimeout(() => {
+                                        // Выходим из ванны чистым
+                                        state.cleanliness = 100;
+                                        updateOverlays();
+                                        petyaImg.src = 'image/petya_normal.png';
+                                        game.style.backgroundImage = "url('image/bathroom.png')";
+                                        cursor.classList.remove('shower-cursor');
+                                        bathStep = 0;
+                                        reward();
+                                    }, 2500);
+                                }
+                            }, 2000);
+                        }
+                    }, 500);
                 };
                 game.appendChild(btn);
             }
-            function removeBath() { const b = document.getElementById('bath-btn'); if (b) b.remove(); }
+            function removeBath() { 
+                const b = document.getElementById('bath-btn'); 
+                if (b) b.remove(); 
+                bathStep = 0;
+                cursor.classList.remove('sponge-cursor', 'shower-cursor');
+            }
 
-            // Спальня
+            // Спальня с одеялом
             function showBedroom() {
                 const existing = document.getElementById('light-switch');
                 if (existing) return;
+                
+                // Добавляем одеяло
+                const blanket = document.createElement('img');
+                blanket.className = 'blanket';
+                blanket.id = 'blanket';
+                blanket.src = 'image/blanket_light.png';
+                game.appendChild(blanket);
+                
                 const sw = document.createElement('button');
                 sw.className = 'light-switch'; sw.id = 'light-switch'; sw.textContent = '💡';
                 sw.onclick = () => {
                     state.night = !state.night;
                     audio.playSound('switch.mp3');
+                    const blanketEl = document.getElementById('blanket');
                     if (state.night) {
                         game.style.backgroundImage = "url('image/bedroom_dark.png')";
+                        if (blanketEl) blanketEl.src = 'image/blanket_dark.png';
                         petyaImg.src = 'image/petya_sleep.png';
                         audio.stop(); audio.playMusic('petya_night.mp3');
                         showZzz();
                     } else {
                         game.style.backgroundImage = "url('image/bedroom_light.png')";
+                        if (blanketEl) blanketEl.src = 'image/blanket_light.png';
                         updatePet();
                         audio.stop(); audio.playMusic('petya_day.mp3');
                         hideZzz();
@@ -794,7 +942,13 @@
                 };
                 game.appendChild(sw);
             }
-            function removeBedroom() { const s = document.getElementById('light-switch'); if (s) s.remove(); hideZzz(); }
+            function removeBedroom() { 
+                const s = document.getElementById('light-switch'); 
+                if (s) s.remove(); 
+                const b = document.getElementById('blanket');
+                if (b) b.remove();
+                hideZzz(); 
+            }
 
             function showZzz() {
                 const c = document.createElement('div'); c.className = 'zzz-container'; c.id = 'zzz-container';
@@ -806,22 +960,35 @@
             }
             function hideZzz() { const z = document.getElementById('zzz-container'); if (z) z.remove(); }
 
-            // Игровой цикл
+            // Игровой цикл - медленное снижение показателей
             function startLoop() {
                 setInterval(() => {
                     if (!state.night && game.style.display === 'block') {
-                        state.happiness = Math.max(0, state.happiness - 0.1);
-                        state.hunger = Math.max(0, state.hunger - 0.15);
-                        state.cleanliness = Math.max(0, state.cleanliness - 0.08);
-                        state.energy = Math.max(0, state.energy - 0.12);
+                        // Очень медленное снижение зеленого цвета
+                        state.happiness = Math.max(0, state.happiness - 0.05);
+                        state.hunger = Math.max(0, state.hunger - 0.08);
+                        state.cleanliness = Math.max(0, state.cleanliness - 0.04);
+                        state.energy = Math.max(0, state.energy - 0.06);
                         updateOverlays();
                         updatePet();
                     } else if (state.night) {
-                        state.energy = Math.min(100, state.energy + 0.6);
+                        state.energy = Math.min(100, state.energy + 0.3);
                         updateOverlays();
+                        // Проверяем, выспался ли Петя
+                        if (state.energy >= 100) {
+                            // Автоматически просыпается когда энергия 100%
+                            state.night = false;
+                            game.style.backgroundImage = "url('image/bedroom_light.png')";
+                            const blanketEl = document.getElementById('blanket');
+                            if (blanketEl) blanketEl.src = 'image/blanket_light.png';
+                            petyaImg.src = 'image/petya_dark.png';
+                            audio.stop(); audio.playMusic('petya_day.mp3');
+                            hideZzz();
+                            updateOverlays();
+                        }
                     }
                     if (Math.random() < 0.05) save();
-                }, 5000);
+                }, 3000);
             }
 
             // Курсор
