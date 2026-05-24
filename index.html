@@ -211,10 +211,10 @@
         }
         .petya-container {
             position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%);
-            z-index: 4; cursor: pointer; transition: transform 0.3s;
+            z-index: 12; cursor: pointer; transition: transform 0.3s;
         }
         .petya-img {
-            width: 380px; height: auto;
+            width: 550px; height: auto;
             filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
         }
         @keyframes petyaJump {
@@ -227,7 +227,7 @@
         /* Иконки */
         .icons-bar {
             position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 20px; z-index: 10;
+            display: flex; gap: 20px; z-index: 15;
             background: rgba(255,255,255,0.95); padding: 15px 25px;
             border-radius: 45px; border: 4px solid #FFB6C1;
             box-shadow: 0 15px 40px rgba(0,0,0,0.2);
@@ -238,9 +238,9 @@
             background: white; overflow: hidden;
         }
         .icon-item:hover { transform: translateY(-5px) scale(1.1); border-color: #FF69B4; box-shadow: 0 10px 30px rgba(255,105,180,0.5); }
-        .icon-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; position: relative; z-index: 1; }
+        .icon-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; position: relative; z-index: 3; }
         .icon-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
             transition: all 0.8s ease;
             border-radius: 50%;
             pointer-events: none;
@@ -307,18 +307,18 @@
         #custom-cursor {
             position: fixed; pointer-events: none; z-index: 1000;
             width: 50px; height: 50px;
-            background: url('image/cursor.png') center/contain no-repeat;
+            background: url('image/cursor.png') center/contain no-repeat !important;
             transform: translate(-50%, -50%); display: none;
         }
         .stylus-cursor {
-            background: url('image/stylus_cursor.png') center/contain no-repeat !important;
-            width: 60px !important; height: 60px !important;
+            background: url('image/cursor.png') center/contain no-repeat !important;
+            width: 50px !important; height: 50px !important;
         }
         .sponge-cursor {
-            background: url('image/sponge_cursor.png') center/contain no-repeat !important;
+            background: url('image/cursor.png') center/contain no-repeat !important;
         }
         .shower-cursor {
-            background: url('image/shower_cursor.png') center/contain no-repeat !important;
+            background: url('image/cursor.png') center/contain no-repeat !important;
         }
         .stylus-holder {
             position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
